@@ -10,13 +10,36 @@ def get_symbol():
 
 aim = "Programming is awesome!"
 n_genotype = len(aim)
+n_population = 10
+population = np.chararray((n_population,n_genotype),unicode=True)
 
+def code_fit_func(aim = aim):
+    target = np.chararray((len(aim)),unicode=True)
+    for chunk in range(len(target)):
+        target[chunk] = aim[chunk]
+    return target
 
 def pooling(n_genotype=n_genotype):
     chromosome = np.chararray((n_genotype),unicode=True)
-    for genotype in range(n_genotype):
-        chromosome[genotype] = get_symbol()
+    for locus in range(n_genotype):
+        chromosome[locus] = get_symbol()
     return chromosome
+
+def mutate_population(n_population=n_population):
+    for individual in range(n_population):
+        population[individual] = pooling()
+    return population
+
+def check_fitness(chromosome,target):
+    return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
+
+if __name__ == '__main__':
+    pop = mutate_population()
+    target = code_fit_func(aim)
+    for n in range(pop.shape[0]):
+        print(np.max(check_fitness(pop[n],target)))
+    # print(check_fitness(pop[0],target
+
 
 # notes:
 # import numpy as np
