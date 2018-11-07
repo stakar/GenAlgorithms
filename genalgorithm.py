@@ -35,18 +35,36 @@ def mutate_population(population,n_population=n_population):
 def check_fitness(chromosome,target):
     return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
 
-def find_best(population,target,K=2):
+# def find_best(population,target,K=2):
+#     fitness = np.zeros(population.shape[0])
+#     for individual in range(population.shape[0]):
+#         fitness[individual] = check_fitness(population[individual],target)
+#     population_of_best = np.chararray((K,population.shape[1]),unicode=True)
+#     for k in range(K):
+#         population_of_best[k] = population[np.where(np.max(fitness))]
+#         population = np.delete(population,np.where(np.max(fitness)),0)
+#     return population_of_best
+
+def fucking(parents):
+    children = np.chararray((2,parents.shape[1]),unicode=True)
+    n_heritage = round(parents.shape[1]/2)
+    for n in range(2):
+        children[n,:n_heritage] = parents[n,:n_heritage]
+        for locus in range(n_heritage,parents.shape[1]):
+            children[n,locus] = get_symbol()
+    return children
+
+def roulette(population,target):
     fitness = np.zeros(population.shape[0])
     for individual in range(population.shape[0]):
         fitness[individual] = check_fitness(population[individual],target)
-    sorted = -np.sort(-fitness)[:K]
-    # K_best = population[np.where(fitness[K:])]
-    population_of_best = np.chararray((K,population.shape[1]),unicode=True)
-    for k in range(K):
-        population_of_best = population[np.where(fitness == sorted[k])]
-    return population_of_best
 
-#TODO work above function out
+def descendants_generation(population,K=2):
+
+    bests = find_best(population,K=K)
+    population[:K] = bests
+
+#TODO create roulette selection of parents
 
 
 
@@ -56,5 +74,8 @@ if __name__ == '__main__':
     target = code_fit_func(aim)
     result = np.zeros(pop.shape[0])
     # print(-np.sort(-result))
-    print(find_best(population,target))
+    parents = find_best(population,target)
+    print(parents)
+    children = fucking(parents)
+    print(children)
     # print(check_fitness(pop[0],target
