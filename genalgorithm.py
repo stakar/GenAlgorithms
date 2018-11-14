@@ -10,7 +10,7 @@ def get_symbol():
 
 aim = "Programming is awesome!"
 n_genotype = len(aim)
-n_population = 5
+n_population = 10
 
 def generate_population(n_population,n_genotype):
     return np.chararray((n_population,n_genotype),unicode=True)
@@ -37,9 +37,11 @@ def check_fitness(chromosome,target):
 
 def fucking(parents):
     children = np.chararray((2,parents.shape[1]),unicode=True)
-    n_heritage = np.random.randint(5,parents[0].shape[0])
-    children[0] = np.concatenate([parents[0][:n_heritage],parents[1][n_heritage:]])
-    children[1] = np.concatenate([parents[1][:n_heritage],parents[0][n_heritage:]])
+    n_heritage = np.random.randint(0,parents[0].shape[0])
+    children[0] = np.concatenate([parents[0][:n_heritage],
+                                  parents[1][n_heritage:]])
+    children[1] = np.concatenate([parents[1][:n_heritage],
+                                  parents[0][n_heritage:]])
     return children
 
 def population_fitness(population,target):
@@ -48,7 +50,13 @@ def population_fitness(population,target):
         fitness[individual] = check_fitness(population[individual],target)
     return fitness
 
-def tournament(population,target,K=5):
+def transform(population,target,n_generation=10000):
+    new_population = population.copy()
+    for generation in range(n_generation):
+        new_population = descendants_generation(population,target)
+    return new_population
+
+def ranking(population,target,K=5):
     fitness = np.zeros(population.shape[0])
     for individual in range(population.shape[0]):
         fitness[individual] = check_fitness(population[individual],target)
@@ -61,22 +69,20 @@ def tournament(population,target,K=5):
     else:
         return mutate_population(population)
 
-def roulette():
-    pass
-
 def random_mutation(population):
     N,C = population.shape
     new_population = population.copy()
     n_mutations = round(population.size * 0.02)
     for n in range(n_mutations):
-        new_population[np.random.randint(N),np.random.randint(C)] = get_symbol()
+        new_population[np.random.randint(N),
+                       np.random.randint(C)] = get_symbol()
     return new_population
 
-#Be aware that in some populations every individual could have 0 fitness
-
-def descendants_generation(population,target,K=5,method = 'tournament'):
-    if method == 'tournament':
-        bests = tournament(population,target,K=K)
+def descendants_generation(population,target,K=5,method = 'roulette'):
+    if method == 'ranking':
+        bests = ranking(population,target,K=K)
+    elif method == 'roulette':
+        bests = roulette(population,target,K=K)
     new_population = np.chararray((population.shape),unicode=True)
     for n in range(round(population.shape[0]/2)):
         parent1 = bests[np.random.randint(K)]
@@ -87,15 +93,42 @@ def descendants_generation(population,target,K=5,method = 'tournament'):
         population = random_mutation(population)
     return population
 
+def roulette_wheel(population,target):
+    generation = population_fitness(population,target)
+    probability = 0
+    wheel = np.zeros(3)
+    if np.any(generation != 0):
+        for individual in range(len(population)):
+            if generation[individual] > 0:
+                ind_probability = probability + (
+                generation[individual] / np.sum(generation))
+                wheel = np.vstack([wheel,[individual,
+                                   probability,ind_probability]])
+                probability = probability + (
+                              generation[individual] / np.sum(generation))
+        return wheel[1:,:]
+
+def roulette_swing(wheel):
+    which = np.random.random()
+    for n in range(len(wheel)):
+        if which > wheel[n][1] and which < wheel[n][2]:
+            return int(wheel[n][0])
+
+def roulette(population,target,K):
+    wheel = roulette_wheel(population,target)
+    winners = np.chararray((K,population.shape[1]),unicode=True)
+    for n in range(K):
+        which = roulette_swing(wheel)
+        winners[n] = population[which]
+    return winners
+
 #TODO create roulette selection of parents
 
 if __name__ == '__main__':
     population = generate_population(n_population,n_genotype)
     pop = mutate_population(population)
-    target = code_fit_func(aim
-    # print(population_fitness(pop,target))
-    new = descendants_generation(pop,target)
-    for n in range(100):
-        new = descendants_generation(pop,target)
+    target = code_fit_func(aim)
+    new = transform(pop,target)
+    print(population)
     print(population_fitness(new,target))
     print(new[np.where(np.max(population_fitness(new,target)))])
