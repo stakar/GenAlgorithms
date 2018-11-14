@@ -48,7 +48,6 @@ def population_fitness(population,target):
         fitness[individual] = check_fitness(population[individual],target)
     return fitness
 
-
 def tournament(population,target,K=5):
     fitness = np.zeros(population.shape[0])
     for individual in range(population.shape[0]):
@@ -62,23 +61,24 @@ def tournament(population,target,K=5):
     else:
         return mutate_population(population)
 
-
 def roulette():
     pass
 
 def random_mutation(population):
     N,C = population.shape
-    population[np.random.randint(N),np.random.randint(C)] = get_symbol()
-    return population
+    new_population = population.copy()
+    n_mutations = round(population.size * 0.02)
+    for n in range(n_mutations):
+        new_population[np.random.randint(N),np.random.randint(C)] = get_symbol()
+    return new_population
 
 #Be aware that in some populations every individual could have 0 fitness
 
-
-def descendants_generation(population,target,K=1,method = 'tournament'):
+def descendants_generation(population,target,K=5,method = 'tournament'):
     if method == 'tournament':
         bests = tournament(population,target,K=K)
     new_population = np.chararray((population.shape),unicode=True)
-    for n in range(round(population.shape[0]/2) ):
+    for n in range(round(population.shape[0]/2)):
         parent1 = bests[np.random.randint(K)]
         parent2 = bests[np.random.randint(K)]
         descendants = fucking(np.array([parent1,parent2]))
@@ -87,29 +87,15 @@ def descendants_generation(population,target,K=1,method = 'tournament'):
         population = random_mutation(population)
     return population
 
-
-
-
-
-
 #TODO create roulette selection of parents
-
-
 
 if __name__ == '__main__':
     population = generate_population(n_population,n_genotype)
     pop = mutate_population(population)
-    target = code_fit_func(aim)
-    result = np.zeros(pop.shape[0])
+    target = code_fit_func(aim
     # print(population_fitness(pop,target))
     new = descendants_generation(pop,target)
     for n in range(100):
         new = descendants_generation(pop,target)
-        # print(population_fitness(new,target))
     print(population_fitness(new,target))
     print(new[np.where(np.max(population_fitness(new,target)))])
-    N,C = new.shape
-    newc = new
-    print(new[np.random.randint(N),np.random.randint(C)] )
-    new[np.random.randint(N),np.random.randint(C)] = get_symbol()
-    print(new == newc)
