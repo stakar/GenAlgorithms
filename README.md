@@ -1,15 +1,14 @@
 # GenAlgorithms
-As part of my MD Thesis I am preparing Genetic Algorithm.
+
+This is implementation og genetic algorithm in python. The whole program takes as an input the sentence and then tries to recreate it by generating strings as chromosomes and then performs pairing and mutating on each generation as in classical genetic algorithm.
 
 ## TODO
-1.Prepare function for pooling
-
-2.Prepare function for evaluating
-
-3. Make it go
+I have been thinking about adding possibility of giving a string as an argument to make it work.
 
 ## Technologies
 Python 3.6
+Numpy
 
 ## Status
-Early work
+Finished version 1.0
+Started working on new version, in which the whole program is wrapped into class.
