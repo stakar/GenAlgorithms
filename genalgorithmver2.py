@@ -4,7 +4,7 @@ from string import ascii_letters, punctuation
 class GenAlgorithmString(object):
 
     def __init__(self,symbols = (ascii_letters + punctuation),n_population=10,
-                 n_generation = 100,method = 'roulette',K=5):
+                 n_generation = 10000,method = 'roulette',K=4):
         """
         This is implementation of genetic algorithm, prepared for MD seminary
         presentation, it tries to generate given input by simulating evolutio
@@ -109,7 +109,8 @@ class GenAlgorithmString(object):
                                                       self.target)
         return fitness
 
-    def _ranking():
+    def _ranking(self):
+        """ Ranking method for individuals selection """
         fitness = self._population_fitness()
         population_of_best = np.chararray((self.K,self.population.shape[1]),
                                            unicode=True)
@@ -122,6 +123,7 @@ class GenAlgorithmString(object):
             return mutate_population(population)
 
     def random_mutation(self):
+        """ Randomly mutate population """
         N,C = self.population.shape
         new_population = self.population.copy()
         n_mutations = round(self.population.size * 0.02)
@@ -131,14 +133,15 @@ class GenAlgorithmString(object):
         self.population = new_population
 
     def descendants_generation(self):
+        """ Generaters new population from pairing old one """
         fitness = self._population_fitness()
         if np.any(fitness != 0):
             if self.method == 'ranking':
                 bests = self.ranking(self.population,self.target)
             elif self.method == 'roulette':
                 bests = self.roulette()
-            new_population = np.chararray((self.population.shape),unicode=True)
-            for n in range(round(self.population.shape[0]/2)):
+            self._mutate_population()
+            for n in range(round(self.K/2)):
                 parent1 = bests[np.random.randint(self.K)]
                 parent2 = bests[np.random.randint(self.K)]
                 descendants = self._fucking(np.array([parent1,parent2]))
@@ -150,6 +153,8 @@ class GenAlgorithmString(object):
 
 
     def roulette_wheel(self):
+        """ Generates roulette wheel based on fitness of each individual.
+            Needed for roulette selection of individuals"""
         generation = self._population_fitness()
         probability = 0
         wheel = np.zeros(3)
@@ -166,12 +171,15 @@ class GenAlgorithmString(object):
 
     @staticmethod
     def roulette_swing(wheel):
+        """ Swings the roulette wheel.
+            Needed for roulette selection of individuals """
         which = np.random.random()
         for n in range(len(wheel)):
             if which > wheel[n][1] and which < wheel[n][2]:
                 return int(wheel[n][0])
 
     def roulette(self):
+        """ Performs roulette selection on population """
         wheel = self.roulette_wheel()
         winners = np.chararray((self.K,self.population.shape[1]),unicode=True)
         for n in range(self.K):
@@ -186,8 +194,9 @@ class GenAlgorithmString(object):
 # n_population = 10
 
 genalg = GenAlgorithmString()
-genalg.fit('Programmingiscool')
+genalg.fit('Programming is awesome!')
 genalg.transform()
+print(genalg._population_fitness())
 
 # genalg._generate_population()
 # genalg._mutate_population()
