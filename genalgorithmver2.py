@@ -4,7 +4,7 @@ from string import ascii_letters, punctuation
 class GenAlgorithmString(object):
 
     def __init__(self,symbols = (ascii_letters + punctuation),n_population=10,
-                 n_generation = 10000,method = 'roulette',K=4):
+                 n_generation = 100,method = 'roulette',K=4):
         """
         This is implementation of genetic algorithm, prepared for MD seminary
         presentation, it tries to generate given input by simulating evolutio
@@ -187,18 +187,7 @@ class GenAlgorithmString(object):
             winners[n] = self.population[which]
         return winners
 
-#TODO create roulette selection of parents
-
-# aim = "Programming is awesome!"
-# n_genotype = len(aim)
-# n_population = 10
-
 genalg = GenAlgorithmString()
 genalg.fit('Programming is awesome!')
 genalg.transform()
 print(genalg._population_fitness())
-
-# genalg._generate_population()
-# genalg._mutate_population()
-# print(genalg.roulette()[0])
-# genalg._fucking(np.array([genalg.roulette()[0],genalg.roulette()[1]]))
