@@ -10,5 +10,4 @@ Python 3.6
 Numpy
 
 ## Status
-Finished version 1.0
-Started working on new version, in which the whole program is wrapped into class.
+Finished versison 2.1, currently the most part of work is done in genalgorithmver2, in which I wrapped it into class and changed the transform method.
