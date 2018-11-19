@@ -35,7 +35,7 @@ def mutate_population(population,n_population=n_population):
 def check_fitness(chromosome,target):
     return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
 
-def fucking(parents):
+def pairing(parents):
     children = np.chararray((2,parents.shape[1]),unicode=True)
     n_heritage = np.random.randint(0,parents[0].shape[0])
     children[0] = np.concatenate([parents[0][:n_heritage],
@@ -87,7 +87,7 @@ def descendants_generation(population,target,K=5,method = 'roulette'):
     for n in range(round(population.shape[0]/2)):
         parent1 = bests[np.random.randint(K)]
         parent2 = bests[np.random.randint(K)]
-        descendants = fucking(np.array([parent1,parent2]))
+        descendants = pairing(np.array([parent1,parent2]))
         population[(n*2)] = descendants[0].squeeze()
         population[(n*2)+1] = descendants[1].squeeze()
         population = random_mutation(population)

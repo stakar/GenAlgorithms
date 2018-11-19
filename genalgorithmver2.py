@@ -90,7 +90,7 @@ class GenAlgorithmString(object):
         return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
 
     @staticmethod
-    def _fucking(parents):
+    def _pairing(parents):
         """ Method for pairing chromosomes and generating descendants, array of
         characters with shape [2,n_genotype] """
         children = np.chararray((2,parents.shape[1]),unicode=True)
@@ -144,7 +144,7 @@ class GenAlgorithmString(object):
             for n in range(round(self.K/2)):
                 parent1 = bests[np.random.randint(self.K)]
                 parent2 = bests[np.random.randint(self.K)]
-                descendants = self._fucking(np.array([parent1,parent2]))
+                descendants = self._pairing(np.array([parent1,parent2]))
                 self.population[(n*2)] = descendants[0].squeeze()
                 self.population[(n*2)+1] = descendants[1].squeeze()
                 self.random_mutation()
