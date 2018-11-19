@@ -3,8 +3,8 @@ from string import ascii_letters, punctuation
 
 class GenAlgorithmString(object):
 
-    def __init__(self,symbols = (ascii_letters + punctuation),n_population=10,
-                 n_generation = 100,method = 'roulette',K=4):
+    def __init__(self,symbols = (ascii_letters + punctuation + ' '),n_population=10,
+                 n_generation = 100,method = 'roulette',K=4,desired_fitness=0.4):
         """
         This is implementation of genetic algorithm, prepared for MD seminary
         presentation, it tries to generate given input by simulating evolutio
@@ -35,6 +35,9 @@ class GenAlgorithmString(object):
         K
         how many best individuals should be used for pairing
 
+        desired_fitness
+        threshold that must be achieved to stop algorithm (ver 2.1)
+
         """
 
         self = self
@@ -43,6 +46,7 @@ class GenAlgorithmString(object):
         self.n_generation = n_generation
         self.method = method
         self.K = K
+        self.desired_fitness = desired_fitness
 
     def get_symbol(self):
         """ Generates random symbol """
@@ -62,13 +66,21 @@ class GenAlgorithmString(object):
         self.n_genotype = len(target)
         self._generate_population()
 
+    # def transform(self):
+    #     """ Performs the whole algorithm """
+    #     self._mutate_population()
+    #     for generation in range(self.n_generation):
+    #         self.descendants_generation()
+
     def transform(self):
-        """ Performs the whole algorithm """
+        """ Performs the whole algorithm until desired fitness is reached. """
         self._mutate_population()
-        new_population = self.population.copy()
-        for generation in range(self.n_generation):
+        pop = np.max(self._population_fitness())
+        self.n_generation = 0
+        while (pop < self.desired_fitness):
             self.descendants_generation()
-        print(self.population)
+            self.n_generation += 1
+            pop = np.max(self._population_fitness())
 
     def _pooling(self):
         """ Mutates the whole chromosome, i.e. generates random set of
@@ -112,6 +124,7 @@ class GenAlgorithmString(object):
     def _ranking(self):
         """ Ranking method for individuals selection """
         fitness = self._population_fitness()
+        population = self.population.copy()
         population_of_best = np.chararray((self.K,self.population.shape[1]),
                                            unicode=True)
         if np.any(fitness != 0):
@@ -137,7 +150,7 @@ class GenAlgorithmString(object):
         fitness = self._population_fitness()
         if np.any(fitness != 0):
             if self.method == 'ranking':
-                bests = self.ranking(self.population,self.target)
+                bests = self._ranking()
             elif self.method == 'roulette':
                 bests = self.roulette()
             self._mutate_population()
@@ -147,7 +160,7 @@ class GenAlgorithmString(object):
                 descendants = self._pairing(np.array([parent1,parent2]))
                 self.population[(n*2)] = descendants[0].squeeze()
                 self.population[(n*2)+1] = descendants[1].squeeze()
-                self.random_mutation()
+                # self.random_mutation()
         else:
             self._mutate_population()
 
@@ -187,7 +200,13 @@ class GenAlgorithmString(object):
             winners[n] = self.population[which]
         return winners
 
-genalg = GenAlgorithmString()
-genalg.fit('Programming is awesome!')
-genalg.transform()
-print(genalg._population_fitness())
+if __name__ == '__main__':
+    genalg = GenAlgorithmString(symbols = (ascii_letters),n_generation = n_gen,
+                                K=5,n_population=10,method = 'roulette',
+                                desired_fitness = 0.4)
+    genalg.fit('Programming is awesome')
+    genalg.transform()
+    max_fitness = np.max(genalg._population_fitness())
+    best_individual = genalg.population[np.where(max_fitness)]
+    print('Number of generations: %i \nBest fitness: %f' %(genalg.n_generation,
+    max_fitness))
