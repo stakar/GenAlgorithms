@@ -201,9 +201,9 @@ class GenAlgorithmString(object):
         return winners
 
 if __name__ == '__main__':
-    genalg = GenAlgorithmString(symbols = (ascii_letters),n_generation = n_gen,
+    genalg = GenAlgorithmString(symbols = (ascii_letters),n_generation = 0,
                                 K=5,n_population=10,method = 'roulette',
-                                desired_fitness = 0.4)
+                                desired_fitness = 0.2)
     genalg.fit('Programming is awesome')
     genalg.transform()
     max_fitness = np.max(genalg._population_fitness())
