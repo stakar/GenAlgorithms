@@ -3,7 +3,7 @@
 
 import numpy as np
 from string import ascii_letters, punctuation
-symbols = ascii_letters + punctuation
+symbols = ascii_letters + punctuation + ' '
 
 def get_symbol():
     return symbols[np.random.randint(len(symbols))]
@@ -13,30 +13,39 @@ n_genotype = len(aim)
 n_population = 10
 
 def generate_population(n_population,n_genotype):
-    return np.chararray((n_population,n_genotype),unicode=True)
+    return np.zeros((n_population,n_genotype),dtype='U1')
 
 def code_fit_func(aim = aim):
-    target = np.chararray((len(aim)),unicode=True)
+    target = np.zeros((len(aim)),dtype='U1')
     for chunk in range(len(target)):
         target[chunk] = aim[chunk]
     return target
 
-def pooling(n_genotype=n_genotype):
-    chromosome = np.chararray((n_genotype),unicode=True)
-    for locus in range(n_genotype):
-        chromosome[locus] = get_symbol()
-    return chromosome
+def pooling(n_gen=n_genotype):
+    return np.array([get_symbol() for n in range(n_gen)],dtype='U1')
 
 def mutate_population(population,n_population=n_population):
     for individual in range(n_population):
-        population[individual] = pooling()
+        population[individual] = np.array([get_symbol() for n in range(n_gen)],
+                                           dtype='U1')
     return population
 
+def code_fit_func(aim = aim):
+    target = np.zeros((len(aim)),dtype = 'U1')
+    for chunk in range(len(aim)):
+        target[chunk] = aim[chunk]
+    return target
+aim = "Programming is awesome!"
+target = code_fit_func(aim)
+
 def check_fitness(chromosome,target):
-    return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
+    dist_arr = np.zeros(len(chromosome))
+    for n in range(len(chromosome)):
+        dist_arr[n] = np.abs( ord(chromosome[n]) - ord(target[n]) )
+    return dist_arr
 
 def pairing(parents):
-    children = np.chararray((2,parents.shape[1]),unicode=True)
+    children = np.zeros((2,parents.shape[1]),dtype='U1')
     n_heritage = np.random.randint(0,parents[0].shape[0])
     children[0] = np.concatenate([parents[0][:n_heritage],
                                   parents[1][n_heritage:]])
@@ -60,7 +69,7 @@ def ranking(population,target,K=5):
     fitness = np.zeros(population.shape[0])
     for individual in range(population.shape[0]):
         fitness[individual] = check_fitness(population[individual],target)
-    population_of_best = np.chararray((K,population.shape[1]),unicode=True)
+    population_of_best = np.zeros((K,population.shape[1]),dtype='U1')
     if np.any(fitness != 0):
         for k in range(K):
             population_of_best[k] = population[np.where(np.max(fitness))]
@@ -122,13 +131,13 @@ def roulette(population,target,K):
         winners[n] = population[which]
     return winners
 
-#TODO create roulette selection of parents
 
 if __name__ == '__main__':
     population = generate_population(n_population,n_genotype)
     pop = mutate_population(population)
     target = code_fit_func(aim)
-    new = transform(pop,target)
-    print(population)
-    print(population_fitness(new,target))
-    print(new[np.where(np.max(population_fitness(new,target)))])
+    print(check_fitness(pop[0],target))
+    # new = transform(pop,target)
+    # print(population)
+    # print(population_fitness(new,target))
+    # print(new[np.where(np.max(population_fitness(new,target)))])
