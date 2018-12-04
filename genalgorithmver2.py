@@ -210,3 +210,5 @@ if __name__ == '__main__':
     best_individual = genalg.population[np.where(max_fitness)]
     print('Number of generations: %i \nBest fitness: %f' %(genalg.n_generation,
     max_fitness))
+
+#TODO: change the charrarrays to arrays with Unicode dtype
