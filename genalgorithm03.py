@@ -1,41 +1,75 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from string import ascii_letters, punctuation
 
 class GenAlgorithmString(object):
 
     def __init__(self,symbols = (ascii_letters + punctuation + ' '),
-                 n_population=10,method = 'roulette',K=4,desired_fitness=0.4,
+                 n_population=10,desired_fitness=0.4,
                  mutation_probability = 0.02):
 
+        """
+        This is implementation of genetic algorithm, prepared for MD seminary
+        presentation, it tries to generate given input by simulating evolutio
+        n mechanisms.
+
+        I used sklearn convention in naming fundamental part of it, so by cal
+        ling fit method one can fits the word/sentence and by calling transfo
+        rm one can activates algorithm so it tries to find the best (most sim
+        ilar) string.
+
+        Attributes
+
+        symbols
+        a set of characters from which algorithm should have created string,
+        by default it is a set of asii letters and punctuation signs
+
+        n_population
+        the quantity of individuals for each population
+
+        n_generation
+        in how many generations algorithm should have found the best individual
+
+        desired_fitness
+        threshold that must be achieved to stop algorithm (ver 2.1)
+
+        """
         self = self
         self.symbols = symbols
         self.n_population = n_population
-        self.method = method
-        self.K = K
         self.desired_fitness = desired_fitness
         self.mutation_probability = mutation_probability
+
 
     def get_symbol(self):
         """ Generates random symbol """
         return self.symbols[np.random.randint(len(self.symbols))]
 
     def fit(self,aim):
-        """ Fits the given sentence to the mod el. Input aim is the string, sente
-        nce that the algorithm is supposed to found."""
+        """ Fits the given sentence to the mod el. Input aim is the string, sent
+        ence that the algorithm is supposed to found. Generates the population"""
         self.target = np.array([n for n in aim],dtype = 'U1')
         self.n_genotype = len(self.target)
         self.population = np.array([[self.get_symbol() for
-         n in range(self.n_genotype)] for n in range(self.n_population)])
+            n in range(self.n_genotype)] for n in range(self.n_population)])
 
-    def transform():
+    def transform(self):
         """ Transform, i.e. execute an algorithm. """
-        best_fitness = np.min(self._population_fitness())
+        self.past_populations = self.population.copy()
+        best_fitness = np.min(self._population_fitness(self.population))
         self.n_generation = 0
-        while best_fitness < self.desired_fitness:
-            self(self.descendants_generation())
-            self.n_generation += 1
-            best_fitness = np.min(self._population_fitness())
+        for n in range(1000):
 
+        # For check, how does an algorithm performs, comment out line above,
+        # and comment line below.
+
+        # while best_fitness > self.desired_fitness:
+            self.past_populations = np.vstack([self.past_populations,
+                                               self.population])
+            self.descendants_generation()
+            self.random_mutation()
+            self.n_generation += 1
+            best_fitness = np.min(self._population_fitness(self.population))
 
     def _check_fitness(self,chromosome,target):
         """ Checks the fitness of individual. Fitness is the mesure of distance
@@ -44,10 +78,10 @@ class GenAlgorithmString(object):
         return sum([abs(ord(chromosome[n])-ord(target[n])) for n in range(
                        self.n_genotype)])
 
-    def _population_fitness(self):
+    def _population_fitness(self,population):
         """Returns an arrray with fitness of each individual in population"""
         return np.array([self._check_fitness(n,self.target) for
-                         n in self.population])
+                         n in population])
 
     @staticmethod
     def _pairing(mother,father):
@@ -76,7 +110,8 @@ class GenAlgorithmString(object):
         """ Method that returns roulette wheel, an array with shape [n_populatio
         n, low_individual_probability,high_individual_probability]"""
         max_val = 126*self.n_genotype
-        pop_fitness = [max_val-n for n in self._population_fitness()]
+        pop_fitness = [max_val-n for n in
+                       self._population_fitness(self.population)]
         wheel = np.zeros((self.n_population,3))
         prob = 0
         for n in range(self.n_population):
@@ -86,7 +121,8 @@ class GenAlgorithmString(object):
         return wheel
 
     def roulette_swing(self,wheel):
-        """ This method takes as an inpute """
+        """ This method takes as an input roulette wheel and returns an index of
+        randomly chosen field """
         which = np.random.random()
         for n in range(len(wheel)):
             if which > wheel[n][1] and which < wheel[n][2]:
@@ -100,6 +136,9 @@ class GenAlgorithmString(object):
                          for n in range(self.n_population)])
 
     def random_mutation(self):
+        """ Randomly mutates the population, for each individual it checks wheth
+        er to do it accordingly to given probability, and then generates new cha
+        racter on random locus """
         population = self.population.copy()
         for n in range(self.n_population):
             decision = np.random.random()
@@ -107,15 +146,38 @@ class GenAlgorithmString(object):
                 which_gene = np.random.randint(self.n_genotype)
                 population[n][which_gene] = self.get_symbol()
         self.population = population
+
+    def plot_fitness(self):
+        """ It checks the mean fitness for each passed population and the fitnes
+        s of best idividual, then plots it. """
+        past_populations = self.past_populations.reshape(int(
+        self.past_populations.shape[0]/self.n_population),
+        self.n_population,self.n_genotype)
+        N = past_populations.shape[0]
+        t = np.linspace(0,N,N)
+        past_fit_mean = [np.mean(self._population_fitness(past_populations[n]))
+                                                          for n in range(N)]
+        past_fit_max = [np.max(self._population_fitness(past_populations[n]))
+                                                        for n in range(N)]
+        plt.plot(t,past_fit_mean,label='population mean fitness')
+        plt.plot(t,past_fit_max,label='population best individual\'s fitness')
+        plt.legend()
+        plt.show()
+
+
+
 if __name__ == '__main__':
-    genalg = GenAlgorithmString(K=5,n_population=5,method = 'roulette',
-                                desired_fitness = 50,mutation_probability=0.02)
+    genalg = GenAlgorithmString(n_population=10,
+                                desired_fitness = 400,mutation_probability=0.02)
     genalg.fit('Programming is awesome')
     pop1 = genalg.population
     print(pop1)
     genalg.random_mutation()
-    # genalg.descendants_generation()
-    pop2 = genalg.population
-    print('CHildren:')
-    print(pop2)
-    print(pop1 == pop2)
+    genalg.transform()
+    print(genalg._population_fitness(genalg.population))
+    print(genalg.n_generation)
+    print(genalg.population.shape)
+    print(genalg.past_populations.shape)
+    genalg.plot_fitness()
+
+#TODO THIS STILL WORKS WRONG, SOMETHING NEEDS TO BE CHANGED
