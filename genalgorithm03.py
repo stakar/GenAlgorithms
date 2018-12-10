@@ -58,12 +58,12 @@ class GenAlgorithmString(object):
         self.past_populations = self.population.copy()
         best_fitness = np.min(self._population_fitness(self.population))
         self.n_generation = 0
-        for n in range(1000):
+        # for n in range(1000):
 
         # For check, how does an algorithm performs, comment out line above,
         # and comment line below.
 
-        # while best_fitness > self.desired_fitness:
+        while best_fitness > self.desired_fitness:
             self.past_populations = np.vstack([self.past_populations,
                                                self.population])
             self.descendants_generation()
@@ -96,15 +96,20 @@ class GenAlgorithmString(object):
         """ Selects the best individuals, then generates new population, with
         half made of parents (i.e. best individuals) and half children(descendan
         ts of parents) """
+        #Two firsts individuals in descendants generation are the best individua
+        #ls from previous generation
+        pop_fit = self._population_fitness(self.population)
+        self.population[:2] = self.population[np.argsort(pop_fit)][:2]
+        #now,let's select best ones
         parents_pop = self.roulette()
-        n_parents = int(np.round(self.n_population/3))
-        for n in range(n_parents,self.n_population-1):
-            father = parents_pop[np.random.randint(self.n_population)]
-            mother = parents_pop[np.random.randint(self.n_population)]
-            children = self._pairing(mother,father)
-            self.population[(n)] = children[0]
-            self.population[(n)+1] = children[1]
-        self.population[:n_parents] = parents_pop[:n_parents]
+        #Finally, we populate new generation by pairing randomly chosen best
+        #individuals
+        for n in range(2,self.n_population-1):
+                father = parents_pop[np.random.randint(self.n_population)]
+                mother = parents_pop[np.random.randint(self.n_population)]
+                children = self._pairing(mother,father)
+                self.population[(n)] = children[0]
+                self.population[(n)+1] = children[1]
 
     def roulette_wheel(self):
         """ Method that returns roulette wheel, an array with shape [n_populatio
@@ -157,27 +162,28 @@ class GenAlgorithmString(object):
         t = np.linspace(0,N,N)
         past_fit_mean = [np.mean(self._population_fitness(past_populations[n]))
                                                           for n in range(N)]
-        past_fit_max = [np.max(self._population_fitness(past_populations[n]))
+        past_fit_max = [np.min(self._population_fitness(past_populations[n]))
                                                         for n in range(N)]
         plt.plot(t,past_fit_mean,label='population mean fitness')
         plt.plot(t,past_fit_max,label='population best individual\'s fitness')
+        plt.xlabel('Number of generations')
+        plt.ylabel('Fitness')
         plt.legend()
         plt.show()
+
+    def best_individual(self,population):
+        return population[np.argmin(self._population_fitness(population))]
 
 
 
 if __name__ == '__main__':
     genalg = GenAlgorithmString(n_population=10,
-                                desired_fitness = 400,mutation_probability=0.02)
-    genalg.fit('Programming is awesome')
+                                desired_fitness = 0,mutation_probability=0.02)
+    genalg.fit('Code!')
     pop1 = genalg.population
     print(pop1)
-    genalg.random_mutation()
     genalg.transform()
     print(genalg._population_fitness(genalg.population))
-    print(genalg.n_generation)
-    print(genalg.population.shape)
-    print(genalg.past_populations.shape)
-    genalg.plot_fitness()
 
-#TODO THIS STILL WORKS WRONG, SOMETHING NEEDS TO BE CHANGED
+    print(genalg.best_individual(genalg.population))
+    genalg.plot_fitness()
