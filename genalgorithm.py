@@ -1,10 +1,13 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from string import ascii_letters, punctuation
 
 class GenAlgorithmString(object):
 
-    def __init__(self,symbols = (ascii_letters + punctuation + ' '),n_population=10,
-                 n_generation = 100,method = 'roulette',K=4,desired_fitness=0.4):
+    def __init__(self,symbols = (ascii_letters + punctuation + ' '),
+                 n_population=10,desired_fitness=0.4,
+                 mutation_probability = 0.02):
+
         """
         This is implementation of genetic algorithm, prepared for MD seminary
         presentation, it tries to generate given input by simulating evolutio
@@ -25,190 +28,162 @@ class GenAlgorithmString(object):
         the quantity of individuals for each population
 
         n_generation
-        in how many generations algorithm should have found the best individu
-        al
-
-        method
-        which selection method should be used for selecting individuals, by
-        default it is roulette, but also ranking could be used.
-
-        K
-        how many best individuals should be used for pairing
+        in how many generations algorithm should have found the best individual
 
         desired_fitness
-        threshold that must be achieved to stop algorithm (ver 2.1)
+        threshold that must be achieved to stop algorithm
 
         """
-
         self = self
         self.symbols = symbols
         self.n_population = n_population
-        self.n_generation = n_generation
-        self.method = method
-        self.K = K
         self.desired_fitness = desired_fitness
+        self.mutation_probability = mutation_probability
+
 
     def get_symbol(self):
         """ Generates random symbol """
         return self.symbols[np.random.randint(len(self.symbols))]
 
-    def _generate_population(self):
-        """ Generates array for population """
-        self.population = np.chararray((self.n_population,
-                                        self.n_genotype),unicode=True)
-
     def fit(self,aim):
-        """ Fits the given sentence to the model """
-        target = np.chararray((len(aim)),unicode=True)
-        for chunk in range(len(target)):
-            target[chunk] = aim[chunk]
-        self.target = target
-        self.n_genotype = len(target)
-        self._generate_population()
-
-    # def transform(self):
-    #     """ Performs the whole algorithm """
-    #     self._mutate_population()
-    #     for generation in range(self.n_generation):
-    #         self.descendants_generation()
+        """ Fits the given sentence to the mod el. Input aim is the string, sent
+        ence that the algorithm is supposed to found. Generates the population"""
+        self.target = np.array([n for n in aim],dtype = 'U1')
+        self.n_genotype = len(self.target)
+        self.population = np.array([[self.get_symbol() for
+            n in range(self.n_genotype)] for n in range(self.n_population)])
 
     def transform(self):
-        """ Performs the whole algorithm until desired fitness is reached. """
-        self._mutate_population()
-        pop = np.max(self._population_fitness())
+        """ Transform, i.e. execute an algorithm. """
+        self.past_populations = self.population.copy()
+        best_fitness = np.min(self._population_fitness(self.population))
         self.n_generation = 0
-        while (pop < self.desired_fitness):
+        # for n in range(1000):
+
+        # For check, how does an algorithm performs, comment out line above,
+        # and comment line below.
+
+        while best_fitness > self.desired_fitness:
+            self.past_populations = np.vstack([self.past_populations,
+                                               self.population])
             self.descendants_generation()
+            self.random_mutation()
             self.n_generation += 1
-            pop = np.max(self._population_fitness())
+            best_fitness = np.min(self._population_fitness(self.population))
 
-    def _pooling(self):
-        """ Mutates the whole chromosome, i.e. generates random set of
-        characters"""
-        chromosome = np.chararray((self.n_genotype),unicode=True)
-        for locus in range(self.n_genotype):
-            chromosome[locus] = self.get_symbol()
-        return chromosome
+    def _check_fitness(self,chromosome,target):
+        """ Checks the fitness of individual. Fitness is the mesure of distance
+        between letter generated randomly and the one that maps it on the locus
+        in target array"""
+        return sum([abs(ord(chromosome[n])-ord(target[n])) for n in range(
+                       self.n_genotype)])
 
-    def _mutate_population(self):
-        """ Mutates the whole population, for each individual performs
-        pooling """
-        for individual in range(self.n_population):
-            self.population[individual] = self._pooling()
+    def _population_fitness(self,population):
+        """Returns an arrray with fitness of each individual in population"""
+        return np.array([self._check_fitness(n,self.target) for
+                         n in population])
 
     @staticmethod
-    def _check_fitness(chromosome,target):
-        """ Checks the fitness of individual """
-        return np.count_nonzero(chromosome[chromosome == target])/len(chromosome)
-
-    @staticmethod
-    def _pairing(parents):
+    def _pairing(mother,father):
         """ Method for pairing chromosomes and generating descendants, array of
         characters with shape [2,n_genotype] """
-        children = np.chararray((2,parents.shape[1]),unicode=True)
-        n_heritage = np.random.randint(0,parents[0].shape[0])
-        children[0] = np.concatenate([parents[0][:n_heritage],
-                                      parents[1][n_heritage:]])
-        children[1] = np.concatenate([parents[1][:n_heritage],
-                                      parents[0][n_heritage:]])
-        return children
-
-    def _population_fitness(self):
-        """ Checks the fitness of each individual in population """
-        fitness = np.zeros(self.population.shape[0])
-        for individual in range(self.population.shape[0]):
-            fitness[individual] = self._check_fitness(self.population[individual],
-                                                      self.target)
-        return fitness
-
-    def _ranking(self):
-        """ Ranking method for individuals selection """
-        fitness = self._population_fitness()
-        population = self.population.copy()
-        population_of_best = np.chararray((self.K,self.population.shape[1]),
-                                           unicode=True)
-        if np.any(fitness != 0):
-            for k in range(self.K):
-                population_of_best[k] = population[np.where(np.max(fitness))]
-                population = np.delete(population,np.where(np.max(fitness)),0)
-            return population_of_best
-        else:
-            return mutate_population(population)
-
-    def random_mutation(self):
-        """ Randomly mutate population """
-        N,C = self.population.shape
-        new_population = self.population.copy()
-        n_mutations = round(self.population.size * 0.02)
-        for n in range(n_mutations):
-            new_population[np.random.randint(N),
-                           np.random.randint(C)] = self.get_symbol()
-        self.population = new_population
+        n_heritage = np.random.randint(0,len(mother))
+        child1 = np.concatenate([father[:n_heritage],mother[n_heritage:]])
+        child2 = np.concatenate([mother[:n_heritage],father[n_heritage:]])
+        return child1,child2
 
     def descendants_generation(self):
-        """ Generaters new population from pairing old one """
-        fitness = self._population_fitness()
-        if np.any(fitness != 0):
-            if self.method == 'ranking':
-                bests = self._ranking()
-            elif self.method == 'roulette':
-                bests = self.roulette()
-            self._mutate_population()
-            for n in range(round(self.K/2)):
-                parent1 = bests[np.random.randint(self.K)]
-                parent2 = bests[np.random.randint(self.K)]
-                descendants = self._pairing(np.array([parent1,parent2]))
-                self.population[(n*2)] = descendants[0].squeeze()
-                self.population[(n*2)+1] = descendants[1].squeeze()
-                # self.random_mutation()
-        else:
-            self._mutate_population()
-
+        """ Selects the best individuals, then generates new population, with
+        half made of parents (i.e. best individuals) and half children(descendan
+        ts of parents) """
+        #Two firsts individuals in descendants generation are the best individua
+        #ls from previous generation
+        pop_fit = self._population_fitness(self.population)
+        self.population[:2] = self.population[np.argsort(pop_fit)][:2]
+        #now,let's select best ones
+        parents_pop = self.roulette()
+        #Finally, we populate new generation by pairing randomly chosen best
+        #individuals
+        for n in range(2,self.n_population-1):
+                father = parents_pop[np.random.randint(self.n_population)]
+                mother = parents_pop[np.random.randint(self.n_population)]
+                children = self._pairing(mother,father)
+                self.population[(n)] = children[0]
+                self.population[(n)+1] = children[1]
 
     def roulette_wheel(self):
-        """ Generates roulette wheel based on fitness of each individual.
-            Needed for roulette selection of individuals"""
-        generation = self._population_fitness()
-        probability = 0
-        wheel = np.zeros(3)
-        if np.any(generation != 0):
-            for individual in range(self.n_population):
-                if generation[individual] > 0:
-                    ind_probability = probability + (
-                    generation[individual] / np.sum(generation))
-                    wheel = np.vstack([wheel,[individual,
-                                       probability,ind_probability]])
-                    probability = probability + (
-                                  generation[individual] / np.sum(generation))
-            return wheel[1:,:]
+        """ Method that returns roulette wheel, an array with shape [n_populatio
+        n, low_individual_probability,high_individual_probability]"""
+        max_val = 126*self.n_genotype
+        pop_fitness = [max_val-n for n in
+                       self._population_fitness(self.population)]
+        wheel = np.zeros((self.n_population,3))
+        prob = 0
+        for n in range(self.n_population):
+            ind_prob = prob + (pop_fitness[n] / np.sum(pop_fitness))
+            wheel[n] = [n,prob,ind_prob]
+            prob = ind_prob
+        return wheel
 
-    @staticmethod
-    def roulette_swing(wheel):
-        """ Swings the roulette wheel.
-            Needed for roulette selection of individuals """
+    def roulette_swing(self,wheel):
+        """ This method takes as an input roulette wheel and returns an index of
+        randomly chosen field """
         which = np.random.random()
         for n in range(len(wheel)):
             if which > wheel[n][1] and which < wheel[n][2]:
                 return int(wheel[n][0])
 
     def roulette(self):
-        """ Performs roulette selection on population """
+        """ This method performs selection of individuals, it takes the coeffici
+        ent k, which is number of new individuals """
         wheel = self.roulette_wheel()
-        winners = np.chararray((self.K,self.population.shape[1]),unicode=True)
-        for n in range(self.K):
-            which = self.roulette_swing(wheel)
-            winners[n] = self.population[which]
-        return winners
+        return np.array([self.population[self.roulette_swing(wheel)]
+                         for n in range(self.n_population)])
+
+    def random_mutation(self):
+        """ Randomly mutates the population, for each individual it checks wheth
+        er to do it accordingly to given probability, and then generates new cha
+        racter on random locus """
+        population = self.population.copy()
+        for n in range(self.n_population):
+            decision = np.random.random()
+            if decision < self.mutation_probability:
+                which_gene = np.random.randint(self.n_genotype)
+                population[n][which_gene] = self.get_symbol()
+        self.population = population
+
+    def plot_fitness(self):
+        """ It checks the mean fitness for each passed population and the fitnes
+        s of best idividual, then plots it. """
+        past_populations = self.past_populations.reshape(int(
+        self.past_populations.shape[0]/self.n_population),
+        self.n_population,self.n_genotype)
+        N = past_populations.shape[0]
+        t = np.linspace(0,N,N)
+        past_fit_mean = [np.mean(self._population_fitness(past_populations[n]))
+                                                          for n in range(N)]
+        past_fit_max = [np.min(self._population_fitness(past_populations[n]))
+                                                        for n in range(N)]
+        plt.plot(t,past_fit_mean,label='population mean fitness')
+        plt.plot(t,past_fit_max,label='population best individual\'s fitness')
+        plt.xlabel('Number of generations')
+        plt.ylabel('Fitness')
+        plt.legend()
+        plt.show()
+
+    def best_individual(self,population):
+        return population[np.argmin(self._population_fitness(population))]
+
+
 
 if __name__ == '__main__':
-    genalg = GenAlgorithmString(symbols = (ascii_letters),n_generation = 0,
-                                K=5,n_population=10,method = 'roulette',
-                                desired_fitness = 0.2)
-    genalg.fit('Programming is awesome')
+    genalg = GenAlgorithmString(n_population=10,
+                                desired_fitness = 0,mutation_probability=0.02)
+    genalg.fit('Code!')
+    pop1 = genalg.population
+    print(pop1)
     genalg.transform()
-    max_fitness = np.max(genalg._population_fitness())
-    best_individual = genalg.population[np.where(max_fitness)]
-    print('Number of generations: %i \nBest fitness: %f' %(genalg.n_generation,
-    max_fitness))
+    print(genalg._population_fitness(genalg.population))
 
-#TODO: change the charrarrays to arrays with Unicode dtype
+    print(genalg.best_individual(genalg.population))
+    genalg.plot_fitness()
