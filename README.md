@@ -7,5 +7,7 @@ Python 3.7
 
 Numpy
 
+Matplotlib
+
 ## Status
 Finished versison 3.0, this version is satysfying. Code in script.py accepts string argument, which is the aim of algorithm. In pdf file ther is description and summary of the whole code.
